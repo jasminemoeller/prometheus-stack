@@ -1,0 +1,9 @@
+- targets: ['192.168.1.10:9100']
+  labels:
+    instance: 'server1.example.com'
+- targets: ['192.168.1.11:9100']
+  labels:
+    instance: 'server2.example.com'
+- targets: ['192.168.1.12:9100']
+  labels:
+    instance: 'server3.example.com'

@@ -1,0 +1,9 @@
+- targets: ['192.168.1.13:8080']
+  labels:
+    instance: 'dockerhost1.example.com'
+- targets: ['192.168.1.14:8080']
+  labels:
+    instance: 'dockerhost2.example.com'
+- targets: ['192.168.1.15:8080']
+  labels:
+    instance: 'dockerhost3.example.com'
