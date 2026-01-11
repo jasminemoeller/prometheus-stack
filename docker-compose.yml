@@ -67,6 +67,7 @@ services:
       FRITZ_HOSTNAME: 'fritz.box'
       FRITZ_USERNAME: 'prometheus'
       FRITZ_PASSWORD: 'prompassword'
+      FRITZ_HOST_INFO: true
     ports:
       - "9787:9787"
 
