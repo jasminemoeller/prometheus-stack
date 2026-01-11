@@ -7,3 +7,6 @@
 - targets: ['192.168.1.12:9100']
   labels:
     instance: 'server3.example.com'
+- targets: ['fritz-exporter:9787']
+  labels:
+    instance: 'fritz.box'

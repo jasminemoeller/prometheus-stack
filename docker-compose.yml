@@ -60,6 +60,16 @@ services:
     command:
       - "--config.file=/etc/blackbox_exporter/config.yml"
 
+  fritz-exporter:
+    image: pdreker/fritz_exporter:2
+    restart: always
+    environment:
+      FRITZ_HOSTNAME: 'fritz.box'
+      FRITZ_USERNAME: 'prometheus'
+      FRITZ_PASSWORD: 'prompassword'
+    ports:
+      - "9787:9787"
+
 networks:
   webservices:
     external: true
