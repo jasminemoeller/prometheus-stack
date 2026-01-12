@@ -60,7 +60,7 @@ services:
     command:
       - "--config.file=/etc/blackbox_exporter/config.yml"
 
-  fritz-exporter:
+  fritz_exporter:
     image: pdreker/fritz_exporter:2
     restart: always
     environment:
@@ -70,6 +70,14 @@ services:
       FRITZ_HOST_INFO: true
     ports:
       - "9787:9787"
+    
+  snmp_exporter:
+    image: prom/snmp-exporter:latest
+    restart: unless-stopped
+    volumes:
+      - ./prometheus/snmp/:/etc/snmp_exporter/:ro
+  command:
+    - '--config.file=/etc/snmp_exporter/*.yml'
 
 networks:
   webservices:
