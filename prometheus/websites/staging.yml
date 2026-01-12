@@ -1,0 +1,6 @@
+- targets:
+  - https://staging.example.com
+  - http://internal-app.local
+  labels:
+    environment: staging
+    team: platform
