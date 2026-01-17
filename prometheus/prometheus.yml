@@ -72,11 +72,22 @@ scrape_configs:
     static_configs:
       - targets: ['imap_exporter:9226']
 
+  # 7 ) My traefik instances
   - job_name: 'traefik'
     file_sd_configs:
       - files:
         - /etc/prometheus/targets/traefik/*.yml
         refresh_interval: 30s
+
+  # 8 ) My UPS
+  - job_name: ups
+    metrics_path: /ups_metrics
+    static_configs:
+      - targets: ['nut_exporter:9199']
+        labels:
+          ups:  "primary"
+    params:
+      ups: [ "primary" ]
    
  
  
