@@ -84,7 +84,7 @@ services:
       - ./prometheus/targets/imap-exporter/config.yml:/app/config.yml:ro
 
   nut_exporter:
-    image: ghcr.io/DRuggeri/nut_exporter:latest
+    image: ghcr.io/druggeri/nut_exporter:latest
     restart: unless-stopped
     environment:
       NUT_EXPORTER_SERVER: 'my.ups.server'
