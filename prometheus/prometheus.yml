@@ -71,6 +71,14 @@ scrape_configs:
   - job_name: 'IMAP accounts'
     static_configs:
       - targets: ['imap_exporter:9226']
+
+  - job_name: 'traefik'
+    file_sd_configs:
+      - files:
+        - /etc/prometheus/targets/traefik/*.yml
+        refresh_interval: 30s
+   
+ 
  
    
   

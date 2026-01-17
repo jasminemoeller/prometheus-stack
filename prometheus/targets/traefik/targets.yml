@@ -1,0 +1,5 @@
+- targets:
+  - host.docker.internal:9101
+  labels:
+    instance: my-local-traefik.example.home
+    environment: internal
