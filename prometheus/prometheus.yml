@@ -65,6 +65,13 @@ scrape_configs:
         target_label: instance
       - target_label: __address__
         replacement: blackbox_exporter:9115
+
+
+  # 6 ) IMAP login and quota
+  - job_name: 'IMAP accounts'
+    static_configs:
+      - targets: ['imap_exporter:9226']
+ 
    
   
   

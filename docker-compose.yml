@@ -79,6 +79,14 @@ services:
     command:
       - '--config.file=/etc/snmp_exporter/*.yml'
 
+  imap_exporter:
+    image: ghcr.io/jasminemoeller/imap-exporter:latest
+    restart: unless-stopped
+    volumes:
+      - ./prometheus/targets/imap-exporter/config.yml:/app/config.yml:ro
+
+
+
 networks:
   webservices:
     external: true
