@@ -1,0 +1,39 @@
+{{ define "email.default.subject" }}
+[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .GroupLabels.SortedPairs.Values | join " " }}
+{{ end }}
+
+{{ define "email.default.html" }}
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  body { font-family: Arial, sans-serif; }
+  .critical { background-color: #d9534f; color: white; }
+  .warning { background-color: #f0ad4e; color: white; }
+  .resolved { background-color: #5cb85c; color: white; }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+  th { background-color: #f2f2f2; }
+</style>
+</head>
+<body>
+<h2>{{ .Status | toUpper }}</h2>
+<table>
+  <tr>
+    <th>Alert</th>
+    <th>Severity</th>
+    <th>Summary</th>
+    <th>Started</th>
+  </tr>
+  {{ range .Alerts }}
+  <tr class="{{ .Labels.severity }}">
+    <td>{{ .Labels.alertname }}</td>
+    <td>{{ .Labels.severity }}</td>
+    <td>{{ .Annotations.summary }}</td>
+    <td>{{ .StartsAt }}</td>
+  </tr>
+  {{ end }}
+</table>
+</body>
+</html>
+{{ end }}

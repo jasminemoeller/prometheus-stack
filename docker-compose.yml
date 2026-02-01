@@ -90,6 +90,18 @@ services:
       NUT_EXPORTER_SERVER: 'my.ups.server'
       NUT_EXPORTER_USERNAME: 'admin'
       NUT_EXPORTER_PASSWORD: 'admin'
+  alertmanager:
+    image: prom/alertmanager:latest
+    restart: unless-stopped
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - ./alertmanager/templates:/etc/alertmanager/templates
+      - alertmanager_data:/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
 
 networks:
   webservices:
@@ -98,3 +110,4 @@ networks:
 volumes:
   prometheus_data:
   grafana_data:
+  alertmanager_data:

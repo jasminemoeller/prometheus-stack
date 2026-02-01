@@ -1,0 +1,83 @@
+global:
+  resolve_timeout: 5m
+  smtp_smarthost: 'smtp.example.com:587'
+  smtp_from: 'alertmanager@yourdomain.com'
+  smtp_auth_username: 'your-email@example.com'
+  smtp_auth_password: 'your-password'
+  smtp_require_tls: true
+
+# Templates for email formatting
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# Route tree - defines how alerts are routed to receivers
+route:
+  # Default receiver for all alerts
+  receiver: 'email-default'
+  
+  # How long to wait before sending a notification
+  group_wait: 10s
+  
+  # How long to wait before sending notification about new alerts in group
+  group_interval: 5m
+  
+  # How long to wait before re-sending a notification
+  repeat_interval: 3h
+  
+  # Group alerts by these labels
+  group_by: ['alertname', 'instance']
+  
+  # Child routes for different severities
+  routes:
+    # Critical alerts - email immediately
+    - match:
+        severity: critical
+      receiver: 'email-critical'
+      group_wait: 10s
+      repeat_interval: 1h
+    
+    # Warning alerts - email but less urgently
+    - match:
+        severity: warning
+      receiver: 'email-warning'
+      group_wait: 30s
+      repeat_interval: 12h
+    
+    # You can add more routes later for push notifications, SMS, etc.
+    # - match:
+    #     severity: critical
+    #   receiver: 'pushover-critical'
+
+# Inhibition rules - suppress certain alerts when others are firing
+inhibit_rules:
+  # Suppress warnings if critical alert is firing for same instance
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['instance']
+
+# Receivers - where to send notifications
+receivers:
+  # Default email receiver
+  - name: 'email-default'
+    email_configs:
+      - to: 'you@example.com'
+        headers:
+          Subject: '[Monitoring] {{ .GroupLabels.alertname }}'
+  
+  # Critical alerts - maybe different email or additional recipients
+  - name: 'email-critical'
+    email_configs:
+      - to: 'you@example.com'
+        headers:
+          Subject: '🚨 [CRITICAL] {{ .GroupLabels.alertname }}'
+        send_resolved: true
+  
+  # Warning alerts
+  - name: 'email-warning'
+    email_configs:
+      - to: 'you@example.com'
+        headers:
+          Subject: '⚠️  [WARNING] {{ .GroupLabels.alertname }}'
+        send_resolved: true
