@@ -6,6 +6,7 @@ services:
     volumes:
       - ./prometheus/prometheus.yml:/prometheus.yml:ro
       - ./prometheus/rules:/etc/prometheus/rules:ro
+      - ./prometheus/alerts:/etc/prometheus/alerts:ro
       - ./prometheus/targets:/etc/prometheus/targets:ro
       - prometheus_data:/prometheus
     command:

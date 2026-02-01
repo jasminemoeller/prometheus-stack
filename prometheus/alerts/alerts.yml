@@ -1,0 +1,230 @@
+# /etc/prometheus/alerts/alerts.yml
+groups:
+  - name: system_alerts
+    interval: 30s
+    rules:
+      # System is down
+      - alert: InstanceDown
+        expr: up == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Instance {{ $labels.instance }} is down"
+          description: "{{ $labels.instance }} has been down for more than 5 minutes."
+
+      # Disk space alerts
+      - alert: DiskSpaceCritical
+        expr: |
+          (node_filesystem_avail_bytes{mountpoint!~"/boot.*|/run.*|/dev.*"} / 
+           node_filesystem_size_bytes) < 0.10
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical: Disk almost full on {{ $labels.instance }}"
+          description: "{{ $labels.mountpoint }} on {{ $labels.instance }} has only {{ $value | humanizePercentage }} free space left."
+
+      - alert: DiskSpaceWarning
+        expr: |
+          (node_filesystem_avail_bytes{mountpoint!~"/boot.*|/run.*|/dev.*"} / 
+           node_filesystem_size_bytes) < 0.20
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Disk space low on {{ $labels.instance }}"
+          description: "{{ $labels.mountpoint }} on {{ $labels.instance }} has {{ $value | humanizePercentage }} free space left."
+
+      # Memory alerts
+      - alert: HighMemoryUsage
+        expr: |
+          (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) > 0.90
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is {{ $value | humanizePercentage }} on {{ $labels.instance }}."
+
+      # CPU alerts
+      - alert: HighCPUUsage
+        expr: |
+          (100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)) > 80
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is {{ $value | humanize }}% on {{ $labels.instance }} for more than 15 minutes."
+
+  - name: service_alerts
+    interval: 1m
+    rules:
+      # Website monitoring
+      - alert: WebsiteDown
+        expr: probe_success{job="blackbox"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Website {{ $labels.instance }} is down"
+          description: "{{ $labels.instance }} has been unreachable for more than 5 minutes."
+
+      - alert: WebsiteSlow
+        expr: probe_duration_seconds{job="blackbox"} > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Website {{ $labels.instance }} is slow"
+          description: "{{ $labels.instance }} response time is {{ $value }}s (over 5 seconds)."
+
+      # SSL certificate expiry
+      - alert: SSLCertExpiringSoon
+        expr: (probe_ssl_earliest_cert_expiry - time()) / 86400 < 14
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "SSL certificate expiring soon for {{ $labels.instance }}"
+          description: "SSL certificate for {{ $labels.instance }} expires in {{ $value | humanizeDuration }}."
+
+      - alert: SSLCertExpiringCritical
+        expr: (probe_ssl_earliest_cert_expiry - time()) / 86400 < 7
+        for: 1h
+        labels:
+          severity: critical
+        annotations:
+          summary: "SSL certificate expiring very soon for {{ $labels.instance }}"
+          description: "SSL certificate for {{ $labels.instance }} expires in {{ $value | humanizeDuration }}."
+
+      # DNS monitoring
+      - alert: DNSDown
+        expr: probe_success{job="blackbox-dns"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "DNS query failed for {{ $labels.instance }}"
+          description: "DNS resolution for {{ $labels.instance }} has been failing for more than 5 minutes."
+
+      # DHCP monitoring
+      - alert: DHCPDown
+        expr: dhcp_up == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "DHCP server {{ $labels.server }} is down"
+          description: "DHCP server {{ $labels.server }} has been down for more than 5 minutes."
+
+      # SMB share monitoring
+      - alert: SMBShareUnavailable
+        expr: smb_share_available == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "SMB share {{ $labels.share }} unavailable"
+          description: "SMB share {{ $labels.sharename }} on {{ $labels.host }} has been unavailable for more than 5 minutes."
+
+      # IMAP monitoring
+      - alert: IMAPDown
+        expr: imap_up == 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "IMAP server {{ $labels.server }} is down"
+          description: "IMAP server {{ $labels.server }} has been unreachable for more than 10 minutes."
+
+      - alert: IMAPQuotaHigh
+        expr: (imap_quota_used_kb / imap_quota_limit_kb) > 0.90
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "IMAP quota high for {{ $labels.account }}"
+          description: "IMAP mailbox {{ $labels.account }} is {{ $value | humanizePercentage }} full."
+
+  - name: cronjob_alerts
+    interval: 1m
+    rules:
+      # Cronjob failures
+      - alert: CronjobFailed
+        expr: cronjob_success == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Cronjob {{ $labels.job_id }} failed"
+          description: "{{ $labels.category }}/{{ $labels.subcategory }}/{{ $labels.job_id }} has failed."
+
+      # Cronjob not running (dead man's switch)
+      # Daily jobs
+      - alert: DailyCronjobNotRun
+        expr: |
+          (time() - cronjob_last_run_timestamp{level="daily"}) > 90000
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "Daily cronjob {{ $labels.job_id }} hasn't run"
+          description: "{{ $labels.job_id }} hasn't run in {{ $value | humanizeDuration }}."
+
+      # Weekly jobs
+      - alert: WeeklyCronjobNotRun
+        expr: |
+          (time() - cronjob_last_run_timestamp{level="weekly"}) > 691200
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "Weekly cronjob {{ $labels.job_id }} hasn't run"
+          description: "{{ $labels.job_id }} hasn't run in {{ $value | humanizeDuration }}."
+
+      # Backup jobs specifically (extra critical)
+      - alert: BackupJobFailed
+        expr: cronjob_success{category="backup"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "BACKUP FAILED: {{ $labels.job_id }}"
+          description: "Backup job {{ $labels.subcategory }}/{{ $labels.job_id }} has failed!"
+
+      # Long-running jobs
+      - alert: CronjobTakingTooLong
+        expr: cronjob_duration_seconds > 3600
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Cronjob {{ $labels.job_id }} taking unusually long"
+          description: "{{ $labels.job_id }} took {{ $value | humanizeDuration }} to complete."
+
+  - name: container_alerts
+    interval: 1m
+    rules:
+      # Container down
+      - alert: ContainerDown
+        expr: |
+          time() - container_last_seen{name!~"POD|k8s_.*"} > 60
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container {{ $labels.name }} is down"
+          description: "Container {{ $labels.name }} on {{ $labels.instance }} hasn't been seen for more than 5 minutes."
+
+      # High container memory usage
+      - alert: ContainerHighMemory
+        expr: |
+          (container_memory_usage_bytes / container_spec_memory_limit_bytes) > 0.90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container {{ $labels.name }} high memory usage"
+          description: "Container {{ $labels.name }} is using {{ $value | humanizePercentage }} of its memory limit."
